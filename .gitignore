@@ -1,0 +1,11 @@
+# Build outputs
+build/
+*.apk
+
+# Docker exports
+*.tar
+*.tar.gz
+
+# Flutter
+.dart_tool/
+.packages
