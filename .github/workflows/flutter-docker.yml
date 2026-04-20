@@ -1,9 +1,10 @@
-name: Flutter Docker CI
+name: Flutter APK Build (Docker)
 
 on:
   push:
     branches:
       - main
+  pull_request:
 
 jobs:
   build:
@@ -13,26 +14,36 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Pull Flutter Image
-        run: docker pull ghcr.io/cirruslabs/flutter:3.41.6
-
-      - name: Install Dependencies
+      - name: Build APK using Flutter Docker
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             -w /app \
             ghcr.io/cirruslabs/flutter:3.41.6 \
-            flutter pub get
+            bash -c "
+              echo '--- Flutter Version ---' &&
+              flutter --version &&
 
-      - name: Build APK
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/app \
-            -w /app \
-            ghcr.io/cirruslabs/flutter:3.41.6 \
-            flutter build apk --release
+              echo '--- Fix SDK Cache ---' &&
+              rm -rf /sdks/flutter/bin/cache &&
 
-      - name: Upload APK
+              echo '--- Initialize Flutter ---' &&
+              flutter doctor &&
+
+              echo '--- Clean Project ---' &&
+              flutter clean &&
+
+              echo '--- Repair Pub Cache ---' &&
+              flutter pub cache repair &&
+
+              echo '--- Get Dependencies ---' &&
+              flutter pub get &&
+
+              echo '--- Build APK ---' &&
+              flutter build apk --release
+            "
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release
